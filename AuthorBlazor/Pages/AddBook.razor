@@ -1,0 +1,55 @@
+﻿@page "/AddBook"
+@using AuthorBlazor.Models
+@using AuthorBlazor.Service
+@inject AuthorService AuthorService
+@inject BookService BookService
+<h3>AddBook</h3>
+
+<EditForm Model="@_book" OnValidSubmit="@AddBookAsync">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <div class="form-group">
+        ISBN: <InputNumber @bind-Value="_book.ISBN"/>
+    </div>
+    <div class="form-group">
+        Title: <InputText @bind-Value="_book.Title"/>
+    </div>
+    <div class="form-group">
+        Genre: <InputText @bind-Value="_book.Genre"/>
+    </div>
+    <div class="form-group">
+        Year of Publication: <InputNumber @bind-Value="_book.PublicationYear"/>
+    </div>
+    <div class="form-group">
+        Number of Pages: <InputNumber @bind-Value="_book.NumOfPages"/>
+    </div>
+    <div class="form-group">
+            <p>
+                Author:<select class="form-control selectpicker" style="width: 150px" @bind="@id">
+                    @foreach (var a in Authors)
+                    {
+                        <option value="@a.Id">@a.FirstName @a.LastName</option>  
+                    }
+                </select>
+            </p>
+        </div>
+    <p class="actions">
+        <button class="btn btn-outline-dark" type="submit">Create</button>
+    </p>
+</EditForm>
+@code {
+    private Book _book = new();
+    private List<Author> Authors = new();
+    private int id = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Authors = await AuthorService.GetAuthorsAsync();
+    }
+
+    private async Task AddBookAsync()
+    {
+        await BookService.AddBookAsync(_book, id);
+    }
+
+}

@@ -1,0 +1,113 @@
+﻿@page "/Preview"
+@using AuthorBlazor.Models
+@using AuthorBlazor.Service
+@inject BookService BookService
+@inject AuthorService AuthorService
+
+<h3>Preview</h3>
+
+<p>
+    Filter by book title: <input type="text" @oninput="@((arg) => FilterByTitle(arg))" style="width: 150px"/>
+    Filter by autor first name: <input type="text" @oninput="@(arg => FilterByAuthorName(arg))" style="width: 150px">
+</p>
+<table class="table">
+    <thead>
+    <tr>
+        <th>ISBN</th>
+        <th>Title</th>
+        <th>Publication Year</th>
+        <th>Number of Pages</th>
+        <th>Genre</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Delete</th>
+    </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in AuthorsToShow)
+        {
+            foreach (var b in a.Books)
+            {
+                <tr>
+                   <td>@b.ISBN</td>
+                    <td>@b.Title</td>
+                    <td>@b.PublicationYear</td>
+                    <td>@b.NumOfPages</td>
+                    <td>@b.Genre</td>
+                    <td>@a.FirstName</td>
+                    <td>@a.LastName</td>
+                    <td>
+                        <button @onclick="@(() => RemoveBook(b.ISBN))">
+                            <i class="oi oi-trash" style="color:#ff0000"/>
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@code {
+    private List<Author> Authors = new();
+    private List<Author> AuthorsToShow = new();
+    private string? title;
+    private string? name;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Authors = await AuthorService.GetAuthorsAsync();
+        AuthorsToShow = Authors;
+    }
+
+    private async Task RemoveBook(int Isbn)
+    {
+        await BookService.RemoveBook(Isbn);
+    }
+
+    private async Task FilterByTitle(ChangeEventArgs changeEventArgs)
+    {
+        title = null;
+        try
+        {
+            title = changeEventArgs.Value.ToString();
+        }
+        catch (Exception e)
+        {}
+        await ExecuteFilter();
+    }
+    
+    private async Task FilterByAuthorName(ChangeEventArgs changeEventArgs)
+    {
+        name = null;
+        try
+        {
+            name = changeEventArgs.Value.ToString();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        await ExecuteFilter();
+    }
+
+    private async Task ExecuteFilter()
+    {
+        Authors = await AuthorService.GetAuthorsAsync();
+        AuthorsToShow = Authors.Where(a => name != null && a.FirstName.Contains(name) || name==null).ToList();
+
+        if (title != null && !title.Equals(""))
+        {
+            foreach (var a in AuthorsToShow)
+            {
+                foreach (var b in a.Books.ToList())
+                {
+                    if (!b.Title.Contains(title))
+                    {
+                        a.Books.Remove(b);
+                    }
+                }
+            }
+        }
+    }
+}
